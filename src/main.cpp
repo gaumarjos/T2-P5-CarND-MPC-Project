@@ -85,12 +85,19 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
+          
+          // CAMBIO QUESTO PERCHE NON MI RIESCE A FARE LA CONVERSIONE
+          //Eigen::VectorXd ptsx = j[1]["ptsx"];
+          //Eigen::VectorXd ptsy = j[1]["ptsy"];
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
           double px = j[1]["x"];
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          
+          Eigen::VectorXd ptsx_eigen = ptsx;
+          Eigen::VectorXd ptsy_eigen = ptsy;
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -98,8 +105,48 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
-          double steer_value;
-          double throttle_value;
+          
+          // Fit the polynomial, I'll use order 3
+          auto coeffs = polyfit(ptsx, ptsy, 3);
+          
+          // The cross track error is calculated by evaluating at polynomial at x, f(x)
+          // and subtracting y.
+          double cte = polyeval(coeffs, px) - py;
+          // Due to the sign starting at 0, the orientation error is -f'(x).                                          ?????????????????
+          // derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
+          double epsi = psi - atan(coeffs[1]);
+          
+          Eigen::VectorXd state(6);
+          state << px, py, psi, v, cte, epsi;
+          
+          auto vars = mpc.Solve(state, coeffs);
+          
+          state << vars[0], vars[1], vars[2], vars[3], vars[4], vars[5];
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          double steer_value = vars[6];
+          double throttle_value = vars[7];
+          
+          
+          
+          
+          
+          
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
