@@ -85,19 +85,12 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          
-          // CAMBIO QUESTO PERCHE NON MI RIESCE A FARE LA CONVERSIONE
-          //Eigen::VectorXd ptsx = j[1]["ptsx"];
-          //Eigen::VectorXd ptsy = j[1]["ptsy"];
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
           double px = j[1]["x"];
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
-          
-          Eigen::VectorXd ptsx_eigen = ptsx;
-          Eigen::VectorXd ptsy_eigen = ptsy;
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -106,38 +99,37 @@ int main() {
           *
           */
           
+          // The coordinates are all in map coordinates, we need them in car coordinates.
+          vector<double> points_x;
+          vector<double> points_y;
+          for (int i = 0; i < ptsx.size(); i++) {
+            double dx = ptsx[i] - px;
+            double dy = ptsy[i] - py;
+            points_x.push_back(dx * cos(-psi) - dy * sin(-psi));
+            points_y.push_back(dx * sin(-psi) + dy * cos(-psi));
+          }
+          // Cast to Eigen::VectorXd (see https://forum.kde.org/viewtopic.php?f=74&t=94839)
+          double* ptrx = &points_x[0];
+          double* ptry = &points_y[0];
+          Eigen::Map<Eigen::VectorXd> ptsx_eigen(ptrx, 6);
+          Eigen::Map<Eigen::VectorXd> ptsy_eigen(ptry, 6);
+          
           // Fit the polynomial, I'll use order 3
-          auto coeffs = polyfit(ptsx, ptsy, 3);
+          auto coeffs = polyfit(ptsx_eigen, ptsy_eigen, 3);
           
           // The cross track error is calculated by evaluating at polynomial at x, f(x)
           // and subtracting y.
-          double cte = polyeval(coeffs, px) - py;
+          double cte = polyeval(coeffs, 0) - 0;
           // Due to the sign starting at 0, the orientation error is -f'(x).                                          ?????????????????
           // derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
-          double epsi = psi - atan(coeffs[1]);
+          double epsi = 0 - atan(coeffs[1]);
           
           Eigen::VectorXd state(6);
-          state << px, py, psi, v, cte, epsi;
+          state << 0, 0, 0, v, cte, epsi;
           
           auto vars = mpc.Solve(state, coeffs);
           
           state << vars[0], vars[1], vars[2], vars[3], vars[4], vars[5];
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
           
           double steer_value = vars[6];
           double throttle_value = vars[7];
