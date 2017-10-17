@@ -179,12 +179,24 @@ ExtendedState MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     vars_lowerbound[i] = -0.436332;
     vars_upperbound[i] = 0.436332;
   }
+  
+  // Freeze delta during the latency time to be equal to the previous control value
+  for (i = delta_start; i < delta_start + latency_steps; i++) {
+    vars_lowerbound[i] = prev_delta_;
+    vars_upperbound[i] = prev_delta_;
+  }
 
   // Acceleration/decceleration upper and lower limits.
   // NOTE: Feel free to change this to something else.
   for (i = a_start; i < n_vars; i++) {
     vars_lowerbound[i] = -1.0;
     vars_upperbound[i] = 1.0;
+  }
+  
+  // Freeze a during the latency time to be equal to the previous control value
+  for (i = a_start; i < a_start + latency_steps; i++) {
+    vars_lowerbound[i] = prev_a_;
+    vars_upperbound[i] = prev_a_;
   }
 
   // Lower and upper limits for the constraints
@@ -251,7 +263,7 @@ ExtendedState MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
   
-  // vector<double> result;
+  // Result structure
   ExtendedState result;
   for (i = 0; i < N-1; i++) {
       result.x.push_back(solution.x[x_start + i]);
@@ -259,6 +271,10 @@ ExtendedState MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
       result.delta.push_back(solution.x[delta_start + i]);
       result.a.push_back(solution.x[a_start + i]);
   }
+  
+  // Update previous control values
+  prev_delta_ = result.delta.at(latency_steps);
+  prev_a_ = result.a.at(latency_steps);
   
   return result;
 }

@@ -17,8 +17,7 @@ const double Lf = 2.67;
 
 // Both the reference cross track and orientation errors are 0.
 
-// double ref_v = 62.1371;
-const double ref_v = 100;
+const double ref_v = 40; // tested up to 80
 
 // Timestep length and duration
 const size_t N = 15;
@@ -26,12 +25,12 @@ const double dt = 0.05;
 const unsigned int latency_steps = 2; // 0.1s / dt
 
 // Weights of each cost component
-const int w_cte = 100;
+const int w_cte = 1;
 const int w_epsi = 1;
 const int w_v = 1;
-const int w_delta = 1;
-const int w_a = 5;
-const int w_ddelta = 600;
+const int w_delta = 1000;
+const int w_a = 10;
+const int w_ddelta = 700;
 const int w_da = 1;
 
 struct ExtendedState {
@@ -54,6 +53,9 @@ class MPC {
   // Solve the model given an initial state and polynomial coefficients.
   // Return the first actuatotions.
   ExtendedState Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs);
+  
+  double prev_delta_ = 0;
+  double prev_a_ = 1.0;
   
 };
 
