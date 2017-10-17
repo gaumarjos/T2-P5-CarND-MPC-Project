@@ -17,7 +17,7 @@ const double Lf = 2.67;
 
 // Both the reference cross track and orientation errors are 0.
 
-const double ref_v = 40; // tested up to 80
+const double ref_v = 80; // tested up to 80
 
 // Timestep length and duration
 const size_t N = 15;
@@ -25,13 +25,13 @@ const double dt = 0.05;
 const unsigned int latency_steps = 2; // 0.1s / dt
 
 // Weights of each cost component
-const int w_cte = 1;
-const int w_epsi = 1;
-const int w_v = 1;
-const int w_delta = 1000;
-const int w_a = 10;
-const int w_ddelta = 700;
-const int w_da = 1;
+const unsigned int w_cte = 1;
+const unsigned int w_epsi = 1;
+const unsigned int w_v = 1;
+const unsigned int w_delta = 1000;
+const unsigned int w_a = 10;
+const unsigned int w_ddelta = 700;
+const unsigned int w_da = 1;
 
 struct ExtendedState {
   vector<double> x;
