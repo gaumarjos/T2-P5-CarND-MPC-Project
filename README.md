@@ -56,6 +56,19 @@ state << 0, 0, 0, v, cte, epsi;
 
 ### Model Predictive Control with Latency
 
+A reaction time (latency) of 100ms is present in this model and needed to be accounted for. If not treated properly, this can lead to unwanted oscillations and weird trajectories due to the non-timely responses of the control.
+
+I approached this problem by constraining the control values `delta` and `a` to their previous values for the duration of the latency (in this case, `latency_steps = 2`). Over this time, the other parameters of the model are constrained as usual and free to concur to the model optimization.
+After the optimization, clearly, the control values used to control the vehicle are those `latency_steps` ahead:
+
+```
+Eigen::VectorXd state(6);
+state << 0, 0, 0, v, cte, epsi;
+ExtendedState solution = mpc.Solve(state, coeffs);
+
+double steer_value = solution.delta.at(latency_steps);
+double throttle_value = solution.a.at(latency_steps);
+```
 
 ## Dependencies
 
