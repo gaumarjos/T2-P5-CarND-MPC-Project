@@ -17,10 +17,28 @@ v_[t+1] = v[t] + a[t] * dt
 cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
 epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
 ```
-where x and y represent the car position, psi its heading direction, v its velocity, cte its cross-track error and epsi its orientation error. Lf is provided as a parameter and denotes the distance between the center of mass of the vehicle and the front wheels, giving a measure of it's handling.
+where x and y represent the car position, psi its heading direction, v its velocity, cte its cross-track error and epsi its orientation error. Lf is provided as a parameter and denotes the distance between the center of mass of the vehicle and the front wheels, giving a measure of its handling.
+
+At every iteration a nre state value is provided by the simulator and the model calculates the best trajectory for the next N time steps (i.e. the one that minimizes the cost function). The cost function is the sum of different costs associated to different errors and weights that can be tuned. In particular: cross-track error, heading error, difference from reference velocity, actuator values and their delta were taken into account.
+
+The weights, set in file `MPC.h`, were tuned to:
+```
+const unsigned int w_cte = 1;
+const unsigned int w_epsi = 1;
+const unsigned int w_v = 1;
+const unsigned int w_delta = 1000;
+const unsigned int w_a = 10;
+const unsigned int w_ddelta = 700;
+const unsigned int w_da = 1;
+```
+in such a way that a decent vehicle handling could be achieved up a target speed of 80mph. At lower speed, the `w_delta` can be set to 1, resulting in a better trajectory planning.
+
+The control signals belonging to the first element of the iteration (actually in this case, to counteract latency, the one at time t+2) is then sent to the simulator. All following points are discarded and, at the next step, the entire operation is repeated.
 
 ### Timestep Length and Elapsed Duration (N & dt)
-A timestep of 50ms (along with a max_cpu_time of 50ms) was chosen empirically. The number of points N = 15 was chosen as sa compromise as smaller N (e.g. 10) didn't provide enough forward planning while higher ones (e.g. 20) didn't allow the car to slalom quickly between close curves.
+The product N * dt defines the prediction horizon. The compromise here is between a short prediction horizons, resulting in more responsive but "blind" controllers, and long prediction horizons, resulting in smoother and "well planning" but somehow slow and lagging controllers.
+A timestep of 50ms (along with a max_cpu_time of 50ms) was chosen empirically. The number of points N = 15 was chosen as a compromise as smaller N (e.g. 10) didn't provide enough forward planning while higher ones (e.g. 20) didn't allow the car to slalom quickly between close curves.
+Also, a timestep of 50ms, coupled with a latency of 100ms, implies that the first 2 steps are actually not used.
 
 ### Polynomial Fitting and MPC Preprocessing
 A 3rd order polynomial is used as it's the lowest order giving the possibility to manage "S-shaped" conditions.
