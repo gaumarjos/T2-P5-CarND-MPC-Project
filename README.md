@@ -3,6 +3,42 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Rubric points
+
+### The Model
+A simple non-linear (as it considers changes in heading direction) kinematic vehicle model was used in this project.
+
+The main model equations are:
+```
+x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+v_[t+1] = v[t] + a[t] * dt
+cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+```
+where x and y represent the car position, psi its heading direction, v its velocity, cte its cross-track error and epsi its orientation error. Lf is provided as a parameter and denotes the distance between the center of mass of the vehicle and the front wheels, giving a measure of it's handling.
+
+### Timestep Length and Elapsed Duration (N & dt)
+A timestep of 50ms (along with a max_cpu_time of 50ms) was chosen empirically. The number of points N = 15 was chosen as sa compromise as smaller N (e.g. 10) didn't provide enough forward planning while higher ones (e.g. 20) didn't allow the car to slalom quickly between close curves.
+
+### Polynomial Fitting and MPC Preprocessing
+A 3rd order polynomial is used as it's the lowest order giving the possibility to manage "S-shaped" conditions.
+Coordinates were first pre-processed to convert them from map coordinates to car coordinates. This also helps simplifying come of the equations as the car position becomes (0,0). Code for this transformation is in function `transformMap2Car`:
+```
+double dx = ptsx[i] - x;
+double dy = ptsy[i] - y;
+pts_car(0,i) =  cos(psi) * dx + sin(psi) * dy;
+pts_car(1,i) = -sin(psi) * dx + cos(psi) * dy;
+```
+while the state becomes
+```
+state << 0, 0, 0, v, cte, epsi;
+```
+
+### Model Predictive Control with Latency
+
+
 ## Dependencies
 
 * cmake >= 3.5
